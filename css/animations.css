@@ -1,0 +1,192 @@
+/* ========== 动画关键帧 ========== */
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(102, 126, 234, 0.6);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ========== 标题发光特效 ========== */
+.brand-title {
+  animation: fadeInDown 1s ease-out, gradientShift 4s ease infinite;
+}
+
+/* ========== 卡片错落动画 ========== */
+.lang-card:nth-child(1) { animation-delay: 0.1s; }
+.lang-card:nth-child(2) { animation-delay: 0.2s; }
+.lang-card:nth-child(3) { animation-delay: 0.3s; }
+.lang-card:nth-child(4) { animation-delay: 0.4s; }
+.lang-card:nth-child(5) { animation-delay: 0.5s; }
+.lang-card:nth-child(6) { animation-delay: 0.6s; }
+.lang-card:nth-child(7) { animation-delay: 0.7s; }
+.lang-card:nth-child(8) { animation-delay: 0.8s; }
+
+/* ========== 卡片 3D 倾斜 ========== */
+.lang-card {
+  transform-origin: center;
+  will-change: transform;
+}
+
+.lang-card.tilting {
+  transition: transform 0.1s ease-out, box-shadow 0.3s ease;
+}
+
+/* ========== 图标翻转 ========== */
+.lang-icon {
+  backface-visibility: hidden;
+}
+
+/* ========== 进度条动画 ========== */
+.lang-progress-bar {
+  animation: progressGrow 1.5s ease-out forwards;
+}
+
+@keyframes progressGrow {
+  from { width: 0; }
+}
+
+/* ========== 数字滚动动画 ========== */
+.stat-value[data-animate] {
+  animation: countUp 1s ease-out forwards;
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== 霓虹发光按钮 ========== */
+.neon-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 32px;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  background: transparent;
+  border: 1px solid var(--accent-cyan);
+  border-radius: 8px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all var(--transition);
+  text-decoration: none;
+}
+
+.neon-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent-cyan);
+  opacity: 0;
+  transition: opacity var(--transition);
+  z-index: -1;
+}
+
+.neon-button:hover {
+  color: var(--bg-primary);
+  box-shadow: 0 0 20px var(--accent-cyan), 0 0 40px rgba(0, 245, 160, 0.3);
+  transform: translateY(-2px);
+}
+
+.neon-button:hover::before {
+  opacity: 1;
+}
+
+.neon-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ========== 标签脉冲 ========== */
+.pulse-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  margin-right: 6px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.pulse-dot.warning { background: var(--accent-gold); }
+.pulse-dot.error { background: var(--accent-pink); }

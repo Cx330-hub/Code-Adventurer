@@ -1,0 +1,871 @@
+// ========== 关卡数据 + 运行时 ==========
+// 全新关卡库 v2：9 门语言各 1 个独立玩法关卡（JavaScript 为第 2 关「三把钥匙」）
+// 设计文档见项目根目录 NewLevels-Design.md
+// buildPreview(code) 控制 iframe 内容；check(code, doc, win) 判题
+(function () {
+  'use strict';
+
+  // 转义用户代码中的 </script>，避免截断 iframe HTML
+  function safeCode(code) {
+    return String(code).replace(/<\/script>/gi, '<\\/script>');
+  }
+
+  // ===== 关卡数据 =====
+  const LEVELS = {
+    // 1. HTML · 建造师 · 快递分拣
+    html: [{
+      id: 'html-1', langId: 'html', index: 1,
+      title: '快递分拣', subtitle: 'Package Sorter',
+      narrative: '你是仓库建造师。传送带送来 3 个包裹（📦 📦 📦），货架却是空的。用 HTML 的列表把它们一件件码上货架。目标：写出一个 <ul> 列表，里面放 3 个 <li>，每个 <li> 写一个包裹名。',
+      knowledge: ['<ul> 是无序列表标签，用来装一列物品；<li> 是列表项，一个 <li> 一件物品', '标签成对出现：<ul> 开头、</ul> 结尾，<li> 也一样', '列表项之间的文字会显示在页面上，一 <li> 一物'],
+      starterCode: '<!-- 传送带：📦 📦 📦，货架空空如也 -->\n<!-- 写一个 <ul> 列表，放入 3 个 <li> 包裹名，让包裹上架 -->\n',
+      solution: '<ul>\n  <li>鼠标</li>\n  <li>键盘</li>\n  <li>耳机</li>\n</ul>',
+      hint: '分三步：① 写 <ul> 开头标签；② 在 <ul> 和 </ul> 之间写 3 个 <li> 标签，每个 <li> 里写一个包裹名；③ 写 </ul> 结尾。',
+      buildPreview: (code) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+        *{margin:0;box-sizing:border-box}
+        body{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+             background:linear-gradient(135deg,#1a1a2e,#0a0e27);font-family:sans-serif;color:#fff}
+        .conveyor{font-size:42px;letter-spacing:10px}
+        .shelf{display:flex;gap:14px;padding:16px;border:2px dashed rgba(255,255,255,.25);border-radius:12px;
+               min-width:320px;justify-content:center;align-items:center;flex-wrap:wrap}
+        .slot{width:76px;height:84px;border:2px solid rgba(255,215,0,.55);border-radius:10px;
+              display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+              background:rgba(255,215,0,.08);animation:pop .45s ease;font-size:13px}
+        .slot .ic{font-size:26px}
+        @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+        .status{color:#888;font-size:13px;text-align:center;max-width:80%}
+        .status.ok{color:#00f5a0}
+      </style></head><body>
+        <div class="conveyor">📦 📦 📦</div>
+        <div class="shelf" id="shelf"></div>
+        <div class="status" id="status">传送带来了 3 个包裹…写 <ul> 列表把它们上架</div>
+        ${safeCode(code)}
+        <script>
+          (function(){
+            const shelf=document.getElementById('shelf'), status=document.getElementById('status');
+            const ul = document.querySelector('ul');
+            if(!ul){ status.textContent='📦 等待上架…写一个 <ul> 列表，放入 3 个 <li> 包裹名'; return; }
+            const items=[...ul.querySelectorAll('li')].map(li=>li.textContent.trim()).filter(Boolean);
+            if(items.length<3){ status.textContent='📦 货架还差 '+(3-items.length)+' 个 <li>，继续写…'; return; }
+            items.slice(0,3).forEach(t=>{
+              const s=document.createElement('div'); s.className='slot';
+              s.innerHTML='<span class="ic">📦</span>'+t; shelf.appendChild(s);
+            });
+            status.textContent='✓ 3 个包裹全部上架！'; status.classList.add('ok');
+          })();
+        </script>
+      </body></html>`,
+      check: (code, doc) => {
+        if (!doc) {
+          const hasUl = /<ul[\s>][\s\S]*<\/ul>/i.test(code);
+          const liCount = (code.match(/<li[\s>]/g) || []).length;
+          if (!hasUl) return { passed: false, message: '没有 <ul> 列表。先写 <ul> 开头、</ul> 结尾。' };
+          if (liCount < 3) return { passed: false, message: `货架上只有 ${liCount} 个 <li>，还差 ${3 - liCount} 个。` };
+          return { passed: true, message: '3 个包裹全部上架！' };
+        }
+        const ul = doc.querySelector('ul');
+        if (!ul) return { passed: false, message: '没有 <ul> 列表。先写 <ul> 开头、</ul> 结尾。' };
+        const lis = ul.querySelectorAll('li');
+        if (lis.length < 3) return { passed: false, message: `货架上只有 ${lis.length} 个 <li>，还差 ${3 - lis.length} 个。` };
+        for (const li of lis) {
+          if (!li.textContent.trim()) return { passed: false, message: '有 <li> 是空的，在里面写点字（包裹名）。' };
+        }
+        return { passed: true, message: '3 个包裹全部上架！' };
+      }
+    }],
+
+    // 2. CSS · 变形记 · 隐形的信使
+    css: [{
+      id: 'css-1', langId: 'css', index: 1,
+      title: '隐形的信使', subtitle: 'Invisible Courier',
+      narrative: '一位信使被魔法隐形了，只剩一团空气。用 CSS 的 opacity 属性让信使现身，他才能把信送出。目标：把 .courier 的 opacity 改成 1（完全不透明），让信使显现。',
+      knowledge: ['CSS 用「选择器 .类名」选中元素，再用「属性: 值」改样式', 'opacity 控制透明度：0 完全透明看不见，1 完全不透明', '取值可以写小数，如 0.5 表示半透明'],
+      starterCode: '<div class="courier">📮 信使</div>\n<style>\n  .courier {\n    opacity: 0;   /* 信使被魔法隐藏了 */\n    /* 把 opacity 改成 1 让信使现身 */\n  }\n</style>',
+      solution: 'opacity: 1;',
+      hint: '在 .courier 的花括号里，把 opacity 的值从 0 改成 1。数字 1 代表完全不透明。',
+      asyncRecheck: true,
+      buildPreview: (code) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+        *{margin:0;box-sizing:border-box}
+        body{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+             background:radial-gradient(circle at 50% 40%,#1a1a3a,#05060d);font-family:sans-serif;color:#fff}
+        .courier{font-size:64px;transition:opacity .8s ease;filter:drop-shadow(0 0 18px rgba(124,92,255,.5))}
+        .letter{font-size:16px;color:#ffd700;opacity:0;transition:opacity .8s ease .6s;letter-spacing:2px}
+        .hint{color:#666;font-size:12px}
+      </style></head><body>
+        <div class="hint">让隐形的信使现身</div>
+        ${safeCode(code)}
+        <div class="letter" id="letter">✉️ 这封信终于能送出去了</div>
+        <script>
+          (function(){
+            const c=document.querySelector('.courier'), letter=document.getElementById('letter');
+            if(!c) return;
+            const op=parseFloat(getComputedStyle(c).opacity);
+            if(op>=0.9){ letter.style.opacity='1'; }
+          })();
+        </script>
+      </body></html>`,
+      check: (code, doc) => {
+        if (!doc) {
+          const m = code.match(/opacity\s*:\s*([01](\.\d+)?|\.\d+)\b/i);
+          const op = m ? parseFloat(m[1]) : 0;
+          if (isNaN(op) || op < 0.9) return { passed: false, message: `信使还是隐形的（当前透明度 ${isNaN(op) ? '未知' : op}）。把 .courier 的 opacity 改成 1。` };
+          return { passed: true, message: '信使现身，信件送出！' };
+        }
+        const c = doc.querySelector('.courier');
+        if (!c) return { passed: false, message: '找不到 .courier 元素，检查标签和 class 名。' };
+        const cs = doc.defaultView.getComputedStyle(c);
+        const op = parseFloat(cs.opacity);
+        if (isNaN(op) || op < 0.9) {
+          return { passed: false, message: `信使还是隐形的（当前透明度 ${isNaN(op) ? '未知' : op}）。把 .courier 的 opacity 改成 1。` };
+        }
+        return { passed: true, message: '信使现身，信件送出！' };
+      }
+    }],
+
+    // 3. JavaScript · 魔法学院 · 三把钥匙（第 2 关，魂类第 1 关通关后进入）
+    javascript: [
+      {
+        id: 'javascript-1', langId: 'javascript', index: 1,
+        title: '新手弹幕', subtitle: 'Beginner Barrage',
+        narrative: 'Bug 怪物正从右侧逼近，你是一名魔法学院的学徒。用 JavaScript 的 setInterval 让法杖每隔 500 毫秒自动发射一颗魔法弹，把怪物击退。目标：写一个定时器，让 fireBullet() 被反复调用。',
+        knowledge: ['setInterval(函数, 毫秒数) 会每隔一段时间重复执行一个函数', '1000 毫秒 = 1 秒，间隔越小发射越快，500 表示每 0.5 秒一次', '把函数作为参数传递时只写函数名、不要加括号（fireBullet 而非 fireBullet()）', '预置的 fireBullet() 每调用一次就发射一颗魔法弹'],
+        starterCode: '// 法杖已准备好，调用 fireBullet() 可发射一颗魔法弹\n// 用 setInterval 每 500 毫秒调用一次 fireBullet()\n',
+        solution: 'setInterval(fireBullet, 500);',
+        hint: '用 setInterval 定时重复执行：第一个参数传要调用的函数名（不要带括号），第二个参数传间隔毫秒数。间隔按题目要求设为 500。',
+        asyncRecheck: true,
+        buildPreview: (code) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+          *{margin:0;box-sizing:border-box}
+          body{height:100vh;overflow:hidden;background:linear-gradient(135deg,#0a0e27,#1a1040);font-family:sans-serif;position:relative}
+          .mage{position:absolute;left:40px;top:50%;transform:translateY(-50%);font-size:40px}
+          .bug{position:absolute;right:60px;top:50%;transform:translateY(-50%);font-size:32px;animation:creep 6s linear infinite}
+          @keyframes creep{from{right:60px}to{right:140px}}
+          .bullet{position:absolute;width:14px;height:14px;border-radius:50%;background:#f7df1e;
+                  box-shadow:0 0 14px #f7df1e;left:80px;top:50%;transform:translateY(-50%);transition:left 0.8s linear}
+          .status{position:fixed;top:12px;left:0;right:0;text-align:center;color:#f7df1e;font-size:12px;letter-spacing:2px}
+        </style></head><body>
+          <div class="status">🧙 法师 vs 🐛 Bug —— 发射魔法弹击退它！</div>
+          <div class="mage">🧙</div><div class="bug">🐛</div>
+          <script>
+            window.__setIntervalCount = 0;
+            window.__bullets = 0;
+            const _origSI = window.setInterval;
+            window.setInterval = function(fn, ms){
+              window.__setIntervalCount++;
+              window.__lastIntervalMs = ms;
+              return _origSI(fn, ms);
+            };
+            window.fireBullet = function(){
+              window.__bullets++;
+              const b = document.createElement('div');
+              b.className='bullet';
+              document.body.appendChild(b);
+              requestAnimationFrame(()=>{ b.style.left = '90%'; });
+              setTimeout(()=>b.remove(), 900);
+            };
+            try { ${safeCode(code)} } catch(e){ document.querySelector('.status').textContent='⚠ 代码出错: '+e.message; }
+          </script>
+        </body></html>`,
+        check: (code, doc, win) => {
+          const hasSI = /setInterval\s*\(/.test(code);
+          if (!hasSI) return { passed: false, message: '没有用到 setInterval。' };
+          if (win && typeof win.__setIntervalCount === 'number') {
+            if (win.__setIntervalCount < 1) return { passed: false, message: 'setInterval 没有被真正调用。' };
+            if (win.__lastIntervalMs && win.__lastIntervalMs > 1000) return { passed: false, message: '间隔太长了，Bug 会先到——试试 500ms。' };
+            if (win.__bullets < 1) return { passed: false, message: '魔法弹还没发射，检查是否调用了 fireBullet。' };
+            return { passed: true, message: '弹幕成形！Bug 被击退了。' };
+          }
+          return { passed: true, message: '弹幕成形！' };
+        }
+      },
+      {
+        id: 'javascript-2', langId: 'javascript', index: 2,
+        title: '三把钥匙', subtitle: 'Three Keys',
+        narrative: '结界之门上有 3 个锁孔，但只有一把钥匙是对的。用 JavaScript 的 if 条件判断，找到正确的锁孔打开它。目标：写一个 if 语句，当 key 等于 2 时调用 openLock(2) 开门。',
+        knowledge: ['if (条件) { 语句 } 是条件判断：条件成立（为真）时，才执行花括号里的语句', '=== 是比较运算符，判断两边的值是否相等，如 key === 2', '预置了钥匙编号 key 和开锁函数 openLock(编号)，调用它就能开对应锁孔'],
+        starterCode: '// 预置：钥匙编号 key = 2，锁孔编号 1 / 2 / 3\n// 写一个 if 判断：当 key 等于 2 时，调用 openLock(2)\n',
+        solution: 'if (key === 2) { openLock(2); }',
+        hint: '分三步：① 写 if (key === 2) { 开头；② 在花括号里写 openLock(2);；③ 写 } 结尾。=== 是「相等」的意思。',
+        asyncRecheck: true,
+        buildPreview: (code) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+          *{margin:0;box-sizing:border-box}
+          body{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
+               background:radial-gradient(circle at 50% 40%,#1a1040,#0a0e27);font-family:sans-serif;color:#fff}
+          .door{width:200px;height:260px;border:3px solid rgba(124,92,255,.6);border-radius:12px;position:relative;
+                display:flex;align-items:center;justify-content:center;gap:14px;background:rgba(124,92,255,.06);
+                transition:transform .8s ease,box-shadow .8s ease}
+          .door.open{transform:translateX(120px);box-shadow:0 0 40px rgba(124,92,255,.6)}
+          .lock{width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.35);
+                display:flex;align-items:center;justify-content:center;font-size:15px;background:rgba(0,0,0,.4)}
+          .lock.on{border-color:#ffd700;color:#ffd700;box-shadow:0 0 16px rgba(255,215,0,.7);animation:pop .4s ease}
+          @keyframes pop{50%{transform:scale(1.25)}}
+          .status{color:#888;font-size:13px;text-align:center;max-width:80%}
+          .status.ok{color:#00f5a0}
+        </style></head><body>
+          <div class="status" id="status">🔑 钥匙编号 key = 2 … 用 if 找到对的锁孔</div>
+          <div class="door" id="door">
+            <div class="lock" data-n="1">1</div>
+            <div class="lock" data-n="2">2</div>
+            <div class="lock" data-n="3">3</div>
+          </div>
+          <script>
+            window.__doorOpened = false;
+            const key = 2;
+            window.openLock = function(n){
+              const l = document.querySelector('.lock[data-n="'+n+'"]');
+              if (l) l.classList.add('on');
+              if (n === key) {
+                window.__doorOpened = true;
+                document.getElementById('door').classList.add('open');
+                document.getElementById('status').textContent='✓ 锁开了！结界之门缓缓开启…';
+                document.getElementById('status').classList.add('ok');
+              } else {
+                document.getElementById('status').textContent='🔑 锁孔 '+n+' 没反应…if 条件该等于 key 的值';
+              }
+            };
+            try { ${safeCode(code)} } catch(e){ document.getElementById('status').textContent='⚠ 代码出错: '+e.message; }
+          </script>
+        </body></html>`,
+        check: (code, doc, win) => {
+          if (!/if\s*\(/.test(code)) return { passed: false, message: '还没有用到 if 判断。写：if (key === 2) { openLock(2); }' };
+          if (!/key\s*===/.test(code)) return { passed: false, message: 'if 条件里要用 === 比较钥匙编号，例如 key === 2。' };
+          if (!/openLock\s*\(/.test(code)) return { passed: false, message: 'if 的花括号里要调用 openLock()，例如 openLock(2);' };
+          if (win && typeof win.__doorOpened === 'boolean') {
+            if (!win.__doorOpened) return { passed: false, message: '门还没开——检查 if 条件里的编号是不是 key 的值（2）。' };
+            return { passed: true, message: '三把钥匙选对了，门开了！' };
+          }
+          return { passed: true, message: '三把钥匙选对了，门开了！' };
+        }
+      }
+    ],
+
+    // 4. Python · 忍者训练 · Z 字寻宝
+    python: [{
+      id: 'python-1', langId: 'python', index: 1,
+      title: 'Z 字寻宝', subtitle: 'Zig-Zag Hunt',
+      narrative: '3×3 的网格上散落着 3 颗星星，排成 Z 字。写一个 for 循环，让忍者沿 Z 字路线走 3 步，收集全部星星。目标：for i in range(3): 循环，循环体里调用 move()。',
+      knowledge: ['for i in range(n): 让循环重复 n 次，n=3 就是走 3 步', 'Python 用「缩进」（4 个空格）表示哪些语句属于循环体', '每调用一次 move()，忍者沿 Z 字路线自动走一步并收集脚下的星星'],
+      starterCode: '# 星星 ★ ★ ★ 排成 Z 字，忍者站在起点\n# 写 for 循环 + range()，循环体里调用 move()\n',
+      solution: 'for i in range(3):\n    move()',
+      hint: 'for 循环结构：for 循环变量 in range(次数):，下一行缩进写要重复的语句。次数填 3，循环体里调用 move()。',
+      buildPreview: (code) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+        *{margin:0;box-sizing:border-box}
+        body{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+             background:linear-gradient(180deg,#0a1a2e,#0a0e27);font-family:sans-serif;color:#fff}
+        .grid{display:grid;grid-template-columns:repeat(3,86px);grid-template-rows:repeat(3,86px);gap:6px;
+              background:rgba(55,118,171,.12);padding:10px;border-radius:14px;position:relative}
+        .cell{border:1px dashed rgba(55,118,171,.35);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:30px}
+        .cell.star{background:rgba(255,215,0,.08)}
+        .cell.star.got{background:rgba(0,245,160,.12)}
+        .cell .star-ic{opacity:1;transition:opacity .4s ease;transform:scale(1);transition:all .3s ease}
+        .cell.got .star-ic{opacity:0;transform:scale(0)}
+        .ninja{position:absolute;font-size:34px;transition:all .45s ease;z-index:5;filter:drop-shadow(0 0 8px rgba(55,118,171,.6))}
+        .score{color:#ffd700;font-size:15px;letter-spacing:2px;min-height:22px}
+        .score.ok{color:#00f5a0}
+      </style></head><body>
+        <div class="grid" id="grid"></div>
+        <div class="score" id="score">收集星星：0 / 3</div>
+        <script>
+          (function(){
+            const grid=document.getElementById('grid'), score=document.getElementById('score');
+            const starPos=[[0,2],[1,1],[2,0]];   // Z 字路径上的 3 颗星
+            for(let r=0;r<3;r++){ for(let c=0;c<3;c++){
+              const cell=document.createElement('div'); cell.className='cell';
+              const isStar=starPos.some(p=>p[0]===r&&p[1]===c);
+              if(isStar){ cell.classList.add('star'); cell.innerHTML='<span class="star-ic">★</span>'; }
+              grid.appendChild(cell);
+            }}
+            const code = ${JSON.stringify(code)};
+            const forMatch = code.match(/for\\s+\\w+\\s+in\\s+range\\s*\\(\\s*(\\d+)\\s*\\)/);
+            const moveCount = (code.match(/move\\s*\\(\\s*\\)/g)||[]).length;
+            if(!forMatch){ score.textContent='⭐ 等待指令…写 for i in range(3): 让忍者出发'; return; }
+            const steps=Math.min(parseInt(forMatch[2],10),3);
+            if(moveCount<1){ score.textContent='⭐ 循环体里还差一步——缩进写 move()'; return; }
+            score.textContent='执行：for i in range('+steps+'): move()';
+            const cells=[...grid.children];
+            const path=starPos;
+            let got=0;
+            for(let i=0;i<steps;i++){
+              setTimeout(()=>{
+                const [r,c]=path[i];
+                const cell=cells[r*3+c];
+                const ninja=document.createElement('div'); ninja.className='ninja';
+                const rect=cell.getBoundingClientRect(), g=grid.getBoundingClientRect();
+                ninja.textContent='🥷';
+                ninja.style.left=(rect.left-g.left+25)+'px';
+                ninja.style.top=(rect.top-g.top+25)+'px';
+                grid.appendChild(ninja);
+                if(cell.classList.contains('star')){ cell.classList.add('got'); got++; score.textContent='收集星星：'+got+' / 3'; score.classList.toggle('ok',got>=3); }
+              }, (i+1)*450);
+            }
+          })();
+        </script>
+      </body></html>`,
+      check: (code) => {
+        const m = code.match(/for\s+\w+\s+in\s+range\s*\(\s*(\d+)\s*\)/);
+        if (!m) return { passed: false, message: '没有找到 for ... in range() 循环。先写：for i in range(3):' };
+        if (parseInt(m[1], 10) !== 3) return { passed: false, message: `range() 里的次数是 ${m[1]}，应该写 3（走 3 步收 3 颗星）。` };
+        if (!/move\s*\(\s*\)/.test(code)) return { passed: false, message: '循环体里没有调用 move()。在 for 的下一行缩进写：move()' };
+        return { passed: true, message: 'Z 字路线走完，星星全收！' };
+      }
+    }],
+
+    // 5. Vue · 策略棋盘 · 能量仪表
+    vue: [{
+      id: 'vue-1', langId: 'vue', index: 1,
+      title: '能量仪表', subtitle: 'Power Meter',
+      narrative: '棋盘上的小队能量见底，所有卡牌灰暗无力。给 player.energy 充能到 100，能量条满格，全体卡牌瞬间激活。目标：给 player.energy 赋一个 ≥ 100 的数值。',
+      knowledge: ['Vue 的核心是「响应式」：修改一个数据，依赖它的界面自动刷新，无需手动操作 DOM', '用「对象.属性 = 值」给对象赋值，如 player.energy = 100', '本关用 Proxy 模拟了 Vue 的响应式引擎，赋值时会自动重渲染卡牌'],
+      starterCode: '// player 是响应式对象，energy 当前为 0\n// 给它赋一个 ≥ 100 的值，充满能量条\nplayer.energy = 0\n',
+      solution: 'player.energy = 100',
+      hint: '把 player.energy 的值从 0 改成一个 ≥ 100 的数（如 100、150）。能量条和卡牌会随赋值实时刷新。',
+      asyncRecheck: true,
+      buildPreview: (code) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+        *{margin:0;box-sizing:border-box}
+        body{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+             background:linear-gradient(135deg,#0a1a2e,#1a2a1e);font-family:sans-serif;color:#fff}
+        .meter{width:320px;height:26px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(66,184,131,.4);overflow:hidden}
+        .bar{height:100%;width:0%;background:linear-gradient(90deg,#42b883,#00f5a0);transition:width .5s ease;border-radius:999px}
+        .meter-label{font-size:12px;color:#888;letter-spacing:2px}
+        .cards{display:flex;gap:14px}
+        .card{padding:14px 22px;border-radius:12px;background:rgba(66,184,131,.12);border:1px solid rgba(66,184,131,.4);
+              text-align:center;font-size:14px;transition:all .5s ease;opacity:.35;filter:grayscale(1)}
+        .card.on{opacity:1;filter:none;box-shadow:0 0 22px rgba(66,184,131,.5);transform:translateY(-4px)}
+        .card .atk{color:#42b883;font-weight:bold;font-size:20px}
+        .hint{color:#666;font-size:12px}
+      </style></head><body>
+        <div class="hint">给 player.energy 充能 ≥ 100</div>
+        <div class="meter"><div class="bar" id="bar"></div></div>
+        <div class="meter-label" id="label">能量 0 / 100</div>
+        <div class="cards" id="cards"></div>
+        <script>
+          (function(){
+            const bases=[10,15,20];
+            const cardsEl=document.getElementById('cards');
+            const bar=document.getElementById('bar'), label=document.getElementById('label');
+            function render(power){
+              const pct=Math.min(100,Math.round(power));
+              bar.style.width=pct+'%';
+              label.textContent='能量 '+Math.min(power,999)+' / 100';
+              cardsEl.innerHTML=bases.map((b,i)=>{
+                const on=power>=100?' on':'';
+                return '<div class="card'+on+'">卡牌 '+(i+1)+'<br>攻击 <span class="atk">'+(b+power)+'</span></div>';
+              }).join('');
+            }
+            const reactive=(obj)=>new Proxy(obj,{ set(t,k,v){ t[k]=v; render(t.energy||0); return true; } });
+            const player=reactive({ energy: 0 });
+            window.player=player;
+            render(0);
+            try { ${safeCode(code)} } catch(e){ cardsEl.innerHTML='<div style="color:#ff6b9d">⚠ '+e.message+'</div>'; }
+          })();
+        </script>
+      </body></html>`,
+      check: (code, doc) => {
+        const m = code.match(/player\.energy\s*=\s*(\d+)/);
+        if (!m) return { passed: false, message: '没有给 player.energy 赋值。写：player.energy = 100' };
+        if (parseInt(m[1], 10) < 100) return { passed: false, message: `能量只充到 ${m[1]}，需要 ≥ 100。` };
+        if (doc) {
+          const bar = doc.getElementById('bar');
+          if (bar) {
+            const w = parseFloat(bar.style.width);
+            if (isNaN(w) || w < 100) return { passed: false, message: '能量条还没充满，检查赋值是否生效。' };
+          }
+        }
+        return { passed: true, message: '能量充满，全部卡牌激活！' };
+      }
+    }],
+
+    // 6. Java · 模拟机器人 · 机器人合唱团
+    java: [{
+      id: 'java-1', langId: 'java', index: 1,
+      title: '机器人合唱团', subtitle: 'Robot Choir',
+      narrative: '舞台上是 3 个沉默的机器人。定义一个 Robot 类，并在类里写一个 sing() 方法——方法写对后，它们就会依次开口合唱。目标：声明 class Robot，并在类内定义 sing() 方法。',
+      knowledge: ['class 关键字用于声明一个类（对象蓝图），类名首字母大写', '方法定义在类体内，格式：返回类型 方法名() { 方法体 }', 'void 表示「无返回值」，sing 只需要开口唱歌，用 void 即可'],
+      starterCode: 'public class Robot {\n    // 在这里定义 sing() 方法\n}\n',
+      solution: 'public class Robot {\n    void sing() { System.out.println("la la la"); }\n}',
+      hint: '在 Robot 类的花括号里定义方法：方法名用 sing、无参数。返回类型写 void（表示不返回数值），方法体用一对花括号包裹。',
+      buildPreview: (code) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+        *{margin:0;box-sizing:border-box}
+        body{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+             background:radial-gradient(circle at 50% 30%,#2a1230,#0a0e27);font-family:sans-serif;color:#fff}
+        .stage{display:flex;gap:30px}
+        .robot{font-size:56px;filter:grayscale(1) brightness(.5);transition:all .6s ease;position:relative}
+        .robot.on{filter:none;animation:sway 1.2s ease-in-out infinite}
+        .robot .note{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-size:22px;opacity:0;transition:opacity .4s ease}
+        .robot.on .note{opacity:1}
+        @keyframes sway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+        .log{color:#888;font-size:13px;text-align:center;max-width:80%;min-height:20px}
+        .log.ok{color:#00f5a0}
+      </style></head><body>
+        <div class="stage" id="stage">
+          <div class="robot">🤖<span class="note">🎵</span></div>
+          <div class="robot">🤖<span class="note">🎶</span></div>
+          <div class="robot">🤖<span class="note">🎵</span></div>
+        </div>
+        <div class="log" id="log">机器人沉默中…定义 Robot 类和 sing() 方法唤醒它们</div>
+        <script>
+          (function(){
+            const code = ${JSON.stringify(code)};
+            const hasClass = /class\\s+Robot\\b/.test(code);
+            const hasMethod = /sing\\s*\\([^)]*\\)\\s*\\{/.test(code);
+            const robots=document.querySelectorAll('.robot'), log=document.getElementById('log');
+            if(hasClass && hasMethod){
+              robots.forEach((r,i)=>setTimeout(()=>r.classList.add('on'), i*400));
+              log.textContent='✓ Robot 类与 sing() 就绪 —— 合唱团开唱！';
+              log.classList.add('ok');
+            } else {
+              if(!hasClass) log.textContent='🤖 机器人沉默中…先声明 class Robot';
+              else log.textContent='🤖 类已就位，再定义 sing() 方法，它们就会开口';
+            }
+          })();
+        </script>
+      </body></html>`,
+      check: (code) => {
+        if (!/class\s+Robot\b/.test(code)) return { passed: false, message: '没有声明 class Robot。先写：public class Robot { }' };
+        if (!/sing\s*\([^)]*\)\s*\{/.test(code)) return { passed: false, message: 'Robot 类里没有 sing() 方法。在花括号里写：void sing() { }' };
+        return { passed: true, message: '合唱团开唱！' };
+      }
+    }],
+
+    // 7. C/C++ · 底层赛车 · 氮气加速
+    cpp: [{
+      id: 'cpp-1', langId: 'cpp', index: 1,
+      title: '氮气加速', subtitle: 'Nitro Boost',
+      narrative: '赛车停在维修站，速度表归零。先声明一个 int 变量 speed 赋值，再用 += 运算触发氮气加速，仪表瞬间飙升。目标：声明 int speed = 数字; 再用 speed += 数字;（或 speed = speed + 数字;）做一次加速。',
+      knowledge: ['int 是整数类型，声明格式：类型 变量名 = 值;，如 int speed = 60;', '= 是赋值号；语句以分号 ; 结尾', 'x = x + n 可以简写成 x += n，叫「复合赋值」，效果一样'],
+      starterCode: '// 第一步：声明 int 变量 speed 并赋一个初始值\n// 第二步：用 speed += 数字 或 speed = speed + 数字 做一次加速\n',
+      solution: 'int speed = 60;\nspeed += 100;',
+      hint: '写两句：① int speed = 60;（声明变量并给初值）；② speed += 100;（加速）。+= 就是「自己加自己」。',
+      buildPreview: (code) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+        *{margin:0;box-sizing:border-box}
+        body{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+             background:linear-gradient(180deg,#001a33,#000);font-family:sans-serif;color:#fff;overflow:hidden}
+        .car{font-size:60px;transition:transform .3s ease}
+        .car.boost{animation:shake .4s ease infinite}
+        @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+        .gauge{width:220px;height:110px;border:3px solid #00599c;border-radius:220px 220px 0 0;border-bottom:none;position:relative;overflow:hidden}
+        .needle{position:absolute;bottom:0;left:50%;width:4px;height:100px;background:#00f5a0;
+                transform-origin:bottom center;transform:rotate(-90deg);transition:transform .8s cubic-bezier(.34,1.56,.64,1)}
+        .rpm{color:#00599c;font-family:monospace;font-size:14px;min-height:20px}
+        .rpm.ok{color:#00f5a0}
+        .flame{font-size:26px;opacity:0;transition:opacity .3s ease}
+      </style></head><body>
+        <div class="car" id="car">🏎️<span class="flame" id="flame">🔥</span></div>
+        <div class="gauge"><div class="needle" id="needle"></div></div>
+        <div class="rpm" id="rpm">speed = 0 · 引擎熄火</div>
+        <script>
+          (function(){
+            const code=${JSON.stringify(code)};
+            const m=code.match(/int\\s+speed\\s*=\\s*(\\d+)\\s*;/);
+            const car=document.getElementById('car'), needle=document.getElementById('needle'),
+                  rpm=document.getElementById('rpm'), flame=document.getElementById('flame');
+            if(!m){ rpm.textContent='🏎️ 引擎待命…先声明 int speed = 数值;'; return; }
+            const base=parseInt(m[1],10);
+            let boost=0;
+            const bm=code.match(/speed\\s*\\+=?\\s*(\\d+)/);
+            if(bm) boost=parseInt(bm[1],10);
+            const total=base+boost;
+            const deg=-90+Math.min(total,300)/300*180;
+            needle.style.transform='rotate('+deg+'deg)';
+            rpm.textContent='speed = '+total+(boost>0?' · 氮气加速！':' · 引擎运转');
+            rpm.classList.toggle('ok',boost>0);
+            if(boost>0){ car.classList.add('boost'); flame.style.opacity='1'; }
+          })();
+        </script>
+      </body></html>`,
+      check: (code) => {
+        const m = code.match(/int\s+speed\s*=\s*(\d+)\s*;/);
+        if (!m) return { passed: false, message: '没找到 int speed = 数值; 语句。先写：int speed = 60;' };
+        if (parseInt(m[1], 10) <= 0) return { passed: false, message: 'speed 的初始值要大于 0。' };
+        if (!/speed\s*\+=|speed\s*=\s*speed\s*\+/.test(code)) return { passed: false, message: '还没有加速运算。在声明下面写：speed += 100;（或 speed = speed + 100;）' };
+        return { passed: true, message: '氮气加速启动，仪表爆表！' };
+      }
+    }],
+
+    // 8. C# · 射击游戏 · 枪械铭牌
+    csharp: [{
+      id: 'csharp-1', langId: 'csharp', index: 1,
+      title: '枪械铭牌', subtitle: 'Gun Tag',
+      narrative: '工作台上躺着一把崭新的枪，铭牌空白。声明一个 string 变量记录武器名、一个 int 变量记录弹药数，铭牌亮起，武器上膛。目标：声明 string weapon = "名字"; 与 int ammo = 数字; 两个变量。',
+      knowledge: ['string 是文本类型，值用双引号包住，如 string weapon = "手枪";', 'int 是整数类型，存数字', '声明格式：类型 变量名 = 值;，语句以分号 ; 结尾', '变量名要见名知义：weapon 存武器名，ammo 存弹药数'],
+      starterCode: '// 声明 string 变量 weapon 并赋一个武器名（用双引号）\n// 声明 int 变量 ammo 并赋一个正整数\n',
+      solution: 'string weapon = "手枪";\nint ammo = 30;',
+      hint: '写两句：① string weapon = "手枪";（双引号里随便写个武器名）；② int ammo = 30;（弹药数要大于 0）。',
+      buildPreview: (code) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+        *{margin:0;box-sizing:border-box}
+        body{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+             background:radial-gradient(circle at 50% 45%,#2a122a,#05060d);font-family:sans-serif;color:#fff}
+        .gun{font-size:56px;filter:drop-shadow(0 0 14px rgba(155,79,150,.5))}
+        .plate{min-width:260px;padding:14px 22px;border-radius:12px;text-align:center;
+               background:rgba(155,79,150,.1);border:2px solid rgba(155,79,150,.5);
+               font-family:monospace;font-size:16px;letter-spacing:1px;transition:all .4s ease}
+        .plate.ok{border-color:#ffd700;box-shadow:0 0 24px rgba(255,215,0,.35);color:#ffd700}
+        .log{color:#888;font-size:13px;min-height:20px}
+        .log.ok{color:#00f5a0}
+      </style></head><body>
+        <div class="gun">🔫</div>
+        <div class="plate" id="plate">铭牌空白…</div>
+        <div class="log" id="log">声明 weapon 和 ammo 两个变量</div>
+        <script>
+          (function(){
+            const code=${JSON.stringify(code)};
+            const plate=document.getElementById('plate'), log=document.getElementById('log');
+            const wm=code.match(/string\\s+weapon\\s*=\\s*"([^"]*)"/);
+            const am=code.match(/int\\s+ammo\\s*=\\s*(\\d+)\\s*;/);
+            if(!wm){ log.textContent='🔫 铭牌空白…先声明 string weapon = "名字";'; return; }
+            if(!wm[1].trim()){ log.textContent='🔫 双引号里还空着，写个武器名'; return; }
+            if(!am){ log.textContent='🔫 还差弹药数——声明 int ammo = 30;'; return; }
+            const ammo=parseInt(am[1],10);
+            if(ammo<=0){ log.textContent='🔫 弹药数要大于 0，再试试'; return; }
+            plate.textContent=wm[1]+' · 弹药 ×'+ammo;
+            plate.classList.add('ok');
+            log.textContent='✓ 铭牌刻好，武器上膛！'; log.classList.add('ok');
+          })();
+        </script>
+      </body></html>`,
+      check: (code) => {
+        const w = code.match(/string\s+weapon\s*=\s*"([^"]*)"/);
+        if (!w) return { passed: false, message: '没找到 string weapon = "名字"; 语句。先写：string weapon = "手枪";' };
+        if (!w[1].trim()) return { passed: false, message: 'weapon 的值是空的，双引号里写个武器名。' };
+        const a = code.match(/int\s+ammo\s*=\s*(\d+)\s*;/);
+        if (!a) return { passed: false, message: '没找到 int ammo = 数值; 语句。先写：int ammo = 30;' };
+        if (parseInt(a[1], 10) <= 0) return { passed: false, message: 'ammo 弹药数要大于 0。' };
+        return { passed: true, message: '铭牌刻好，武器上膛！' };
+      }
+    }],
+
+    // 9. Uni-app · 生活模拟 · 宠物小屋
+    uniapp: [{
+      id: 'uniapp-1', langId: 'uniapp', index: 1,
+      title: '宠物小屋', subtitle: 'Pet House',
+      narrative: '手机屏幕里的电子宠物在呼呼大睡。用 Uni-app 的 <view> 标签包住一句问候，宠物听到后就会醒来回应。目标：写出一个内容非空的 <view>问候语</view>。',
+      knowledge: ['Uni-app 用 <view> 代替 HTML 的 <div>，是布局容器', '标签成对出现：<view> 开始、</view> 结束，中间放内容', '文字写在标签内部就会显示在页面上'],
+      starterCode: '<!-- 宠物在睡觉…写一个 <view> 标签，包住一句问候语 -->\n<!-- 例如：<view>你好，小可爱！</view> -->\n',
+      solution: '<view>你好，小可爱！</view>',
+      hint: '把 <view> 和 </view> 之间的占位文字换成任意问候语，比如「你好，小可爱！」。',
+      asyncRecheck: true,
+      buildPreview: (code) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+        *{margin:0;box-sizing:border-box}
+        body{height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0e27;font-family:sans-serif}
+        .phone{width:250px;height:500px;background:#000;border-radius:34px;border:6px solid #1a1f4e;
+               padding:22px 12px;box-shadow:0 20px 60px rgba(0,220,130,.25);display:flex;flex-direction:column}
+        .notch{width:60px;height:6px;background:#1a1f4e;border-radius:3px;margin:0 auto 12px}
+        .screen{flex:1;background:linear-gradient(180deg,#0d2b1e,#0a1a2e);border-radius:10px;padding:16px;
+                display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;overflow:auto}
+        .pet{font-size:60px;transition:transform .5s ease;filter:grayscale(.6) brightness(.7)}
+        .pet.awake{filter:none;animation:bounce .8s ease}
+        @keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-10px)}}
+        .bubble{background:rgba(0,220,130,.15);border:1px solid rgba(0,220,130,.4);color:#a0ffd0;
+                border-radius:12px;padding:10px 16px;font-size:13px;opacity:0;transition:opacity .5s ease;text-align:center}
+        .bubble.show{opacity:1}
+        view{display:block;padding:12px 16px;background:#00dc82;color:#fff;border-radius:10px;
+             font-size:15px;box-shadow:0 4px 14px rgba(0,220,130,.35);max-width:100%;word-break:break-all}
+        .hint{color:#666;font-size:12px;text-align:center}
+      </style></head><body>
+        <div class="phone"><div class="notch"></div><div class="screen">
+          <div class="pet" id="pet">🐹</div>
+          <div class="bubble" id="bubble">😊 收到！</div>
+          ${safeCode(code)}
+          <div class="hint">宠物在睡觉…写 <view> 问候它</div>
+        </div></div>
+        <script>
+          (function(){
+            const v=document.querySelector('view');
+            const pet=document.getElementById('pet'), bubble=document.getElementById('bubble');
+            if(v && v.textContent.trim()){
+              pet.classList.add('awake');
+              setTimeout(()=>bubble.classList.add('show'), 500);
+            }
+          })();
+        </script>
+      </body></html>`,
+      check: (code, doc) => {
+        // 剥离注释后再判断，避免把注释里的示例代码误判为真实代码
+        const codeNoComment = code.replace(/<!--[\s\S]*?-->/g, '');
+        const hasView = /<view[\s>][\s\S]*?<\/view>/i.test(codeNoComment);
+        if (!hasView) return { passed: false, message: '没有 <view> 标签。先写：<view>问候语</view>' };
+        if (doc) {
+          const v = doc.querySelector('view');
+          if (v && !v.textContent.trim()) return { passed: false, message: '<view> 里是空的，写一句问候语。' };
+        } else if (/<view>\s*<\/view>/i.test(codeNoComment)) {
+          return { passed: false, message: '<view> 里是空的，写一句问候语。' };
+        }
+        return { passed: true, message: '宠物醒来了，回应了你的问候！' };
+      }
+    }],
+  };
+
+  window.LEVELS = LEVELS;
+
+  // ===== 运行时状态 =====
+  const state = {
+    currentLang: null, currentLevel: null,
+    editorEl: null, iframeEl: null, toastTimer: null,
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  // 从剧情文本中提取「目标：xxx」作为本关目标
+  const deriveObjective = (level) => {
+    const m = level.narrative.match(/目标[:：]\s*([^。.!?]+)/);
+    if (m) return m[1].trim();
+    const m2 = level.narrative.match(/任务[:：]\s*([^。.!?]+)/);
+    if (m2) return m2[1].trim();
+    return '编写代码，完成本关挑战';
+  };
+
+  // ===== 核心 API =====
+  const Runtime = {
+    showLevel(langId, index) {
+      const lang = window.LANGUAGES.find(l => l.id === langId);
+      const levels = LEVELS[langId];
+      if (!lang || !levels || !levels[index - 1]) {
+        window.app && window.app.navigateTo('#');
+        return;
+      }
+      const level = levels[index - 1];
+      state.currentLang = lang;
+      state.currentLevel = level;
+
+      // 切换 page
+      document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+      const lp = $('levelPage');
+      lp.style.display = 'flex';
+      lp.classList.add('active');
+
+      // 主题色注入
+      lp.style.setProperty('--card-color-1', lang.color1);
+      lp.style.setProperty('--card-color-2', lang.color2);
+      lp.style.setProperty('--card-glow', lang.glow);
+
+      // 填充内容
+      $('levelIcon').textContent = lang.icon;
+      $('levelTitle').textContent = level.title;
+      $('levelSubtitle').textContent = `${lang.name} · ${lang.gameplay} · 第 ${index} 关`;
+      $('levelProgress').textContent = `${index} / ${lang.levels}`;
+      $('hintText').textContent = level.hint;
+
+      // 任务目标（显示在顶部目标横幅）
+      const objEl = $('missionObjective');
+      if (objEl) objEl.textContent = deriveObjective(level);
+
+      // 复位过关结算与挑战次数
+      state.attempts = 0;
+      const pm = $('passModal');
+      if (pm) pm.hidden = true;
+      const starWrap = $('starRating');
+      if (starWrap) {
+        starWrap.querySelectorAll('.star').forEach(s => {
+          s.classList.remove('filled');
+          s.classList.add('empty');
+          s.style.animationDelay = '0s';
+        });
+      }
+
+      // 编辑器始终恢复为该关骨架起始代码，禁止残留上次代码或答案
+      state.editorEl.value = level.starterCode;
+
+      // 标记当前屏为 level（避免 picker 键盘拦截）
+      if (window.app) window.app.currentScreen = 'level';
+
+      // 自动运行预览
+      this.runPreview();
+    },
+
+    runPreview() {
+      const level = state.currentLevel;
+      if (!level || !state.iframeEl) return;
+      const code = state.editorEl.value;
+      const status = $('previewStatus');
+      status.textContent = '运行中'; status.className = 'preview-status running';
+      try {
+        state.iframeEl.srcdoc = level.buildPreview(code);
+      } catch (e) {
+        status.textContent = '错误'; status.className = 'preview-status error';
+        return;
+      }
+      state.iframeEl.onload = () => {
+        status.textContent = '就绪'; status.className = 'preview-status';
+      };
+      setTimeout(() => {
+        if (status.classList.contains('running')) {
+          status.textContent = '就绪'; status.className = 'preview-status';
+        }
+      }, 1200);
+    },
+
+    async checkAnswer() {
+      const level = state.currentLevel;
+      if (!level) return;
+      const code = state.editorEl.value;
+      let result;
+      try {
+        let doc = null, win = null;
+        try { doc = state.iframeEl.contentDocument; win = state.iframeEl.contentWindow; } catch (e) {}
+        result = level.check(code, doc, win);
+        if (!result.passed && level.asyncRecheck) {
+          await new Promise(r => setTimeout(r, 700));
+          try { doc = state.iframeEl.contentDocument; win = state.iframeEl.contentWindow; } catch (e) {}
+          result = level.check(code, doc, win);
+        }
+      } catch (e) {
+        result = { passed: false, message: '检查出错：' + e.message };
+      }
+      if (result.passed) {
+        this.markComplete(level);
+        this.celebrate();
+        const stars = this.computeStars();
+        this.showPassModal(level, stars);
+      } else {
+        state.attempts = (state.attempts || 0) + 1;
+        this.showToast('error', '再试试：' + result.message);
+      }
+    },
+
+    markComplete(level) {
+      const key = `progress_${level.langId}`;
+      const data = JSON.parse(localStorage.getItem(key) || '{}');
+      data.completed = Math.max(data.completed || 0, level.index);
+      data.levels = data.levels || [];
+      if (!data.levels.includes(level.index)) data.levels.push(level.index);
+      localStorage.setItem(key, JSON.stringify(data));
+    },
+
+    showHint() {
+      $('hintModal').hidden = false;
+    },
+
+    resetCode() {
+      if (!state.currentLevel) return;
+      state.editorEl.value = state.currentLevel.starterCode;
+      this.runPreview();
+      this.showToast('success', '代码已重置');
+    },
+
+    showToast(type, msg) {
+      const toast = $('levelToast');
+      toast.textContent = msg;
+      toast.className = 'level-toast ' + type;
+      toast.hidden = false;
+      requestAnimationFrame(() => toast.classList.add('show'));
+      clearTimeout(state.toastTimer);
+      state.toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => { toast.hidden = true; }, 400);
+      }, 2600);
+    },
+
+    // 通关庆祝：战场实况区域粒子爆发
+    celebrate() {
+      if (window.app && window.app.spawnClickEffect) {
+        const r = state.iframeEl.getBoundingClientRect();
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            window.app.spawnClickEffect(
+              cx + (Math.random() - 0.5) * 220,
+              cy + (Math.random() - 0.5) * 170,
+              state.currentLang.color1,
+              true
+            );
+          }, i * 120);
+        }
+      }
+    },
+
+    // 星级评价：按「未提交错误尝试」次数评定
+    computeStars() {
+      const a = state.attempts || 0;
+      if (a === 0) return 3;
+      if (a <= 2) return 2;
+      return 1;
+    },
+
+    // 过关结算弹窗：星级 + 奖励反馈
+    showPassModal(level, stars) {
+      const starWrap = $('starRating');
+      if (starWrap) {
+        starWrap.querySelectorAll('.star').forEach((s, i) => {
+          if (i < stars) {
+            s.classList.add('filled');
+            s.classList.remove('empty');
+            s.style.animationDelay = (i * 0.18) + 's';
+          } else {
+            s.classList.remove('filled');
+            s.classList.add('empty');
+            s.style.animationDelay = '0s';
+          }
+        });
+      }
+      const exp = 50 + stars * 25;
+      const coin = 20 + stars * 15;
+      const re = $('rewardExp'); if (re) re.textContent = '+' + exp;
+      const rc = $('rewardCoin'); if (rc) rc.textContent = '+' + coin;
+      const pm = $('passModal'); if (pm) pm.hidden = false;
+    },
+
+    // Portal 过渡：从卡片位置扩展主题色色块到全屏
+    startPortalTransition(rect, lang) {
+      const overlay = document.createElement('div');
+      overlay.className = 'portal-overlay';
+      overlay.style.top = rect.top + 'px';
+      overlay.style.left = rect.left + 'px';
+      overlay.style.width = rect.width + 'px';
+      overlay.style.height = rect.height + 'px';
+      overlay.style.setProperty('--card-color-1', lang.color1);
+      overlay.style.setProperty('--card-color-2', lang.color2);
+      overlay.style.setProperty('--card-glow', lang.glow);
+      document.body.appendChild(overlay);
+      overlay.offsetHeight; // 强制 reflow
+      overlay.classList.add('expanding');
+      setTimeout(() => overlay.classList.add('fading'), 560);
+      setTimeout(() => overlay.remove(), 950);
+    },
+  };
+
+  window.LevelsRuntime = Runtime;
+
+  // ===== 事件绑定 =====
+  document.addEventListener('DOMContentLoaded', () => {
+    state.editorEl = $('codeEditor');
+    state.iframeEl = $('previewFrame');
+    if (!state.editorEl || !state.iframeEl) return;
+
+    $('btnCheck').addEventListener('click', () => Runtime.checkAnswer());
+    $('btnHint').addEventListener('click', () => Runtime.showHint());
+    $('hintClose').addEventListener('click', () => { $('hintModal').hidden = true; });
+    $('levelBackBtn').addEventListener('click', () => {
+      if (window.app) window.app.navigateTo('#');
+    });
+
+    // 过关结算：继续冒险 / 返回地图
+    $('passNextBtn').addEventListener('click', () => {
+      $('passModal').hidden = true;
+      const cur = state.currentLevel;
+      const next = cur && LEVELS[state.currentLang.id][cur.index];
+      if (next) {
+        Runtime.showLevel(state.currentLang.id, cur.index + 1);
+      } else if (window.app) {
+        window.app.navigateTo('#');
+      }
+    });
+    $('passBackBtn').addEventListener('click', () => {
+      $('passModal').hidden = true;
+      if (window.app) window.app.navigateTo('#');
+    });
+
+    // 编辑器实时预览（debounce）
+    let t;
+    state.editorEl.addEventListener('input', () => {
+      clearTimeout(t);
+      t = setTimeout(() => Runtime.runPreview(), 500);
+    });
+    // Ctrl/Cmd+Enter 检查答案
+    state.editorEl.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        Runtime.checkAnswer();
+      }
+      e.stopPropagation(); // 阻止全局 picker 键盘拦截
+    });
+  });
+})();

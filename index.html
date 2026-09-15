@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeAdventurer 代码冒险者 — 多语言编程闯关学习</title>
+    <link rel="stylesheet" href="css/style.css?v=53">
+    <link rel="stylesheet" href="css/animations.css?v=53">
+</head>
+<body>
+    <!-- 预加载动画 -->
+    <div class="preloader" id="preloader">
+        <div class="preloader-content">
+            <div class="honeycomb">
+                <div></div><div></div><div></div><div></div>
+                <div></div><div></div><div></div>
+            </div>
+            <div class="preloader-text">
+                <span class="preloader-title">CodeAdventurer</span>
+                <span class="preloader-sub">LOADING<span class="dots"><span>.</span><span>.</span><span>.</span></span></span>
+            </div>
+            <div class="loader-ring" id="loaderRing" role="button" tabindex="0" aria-label="进入">
+                <div class="loader-ring-outer"></div>
+                <div class="loader-ring-inner"></div>
+                <span class="loader-ring-text">0%</span>
+            </div>
+        </div>
+        <div class="energy-wave"></div>
+    </div>
+
+    <!-- 动态粒子背景 -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- 应用容器 -->
+    <div class="app-container" id="appContainer">
+        <!-- 首页：两屏滚动转场 -->
+        <div class="home-page page" id="homePage">
+            <div class="screens-wrapper" id="screensWrapper">
+                <!-- 第一屏：品牌介绍 -->
+                <section class="screen screen-hero" id="screenHero">
+                    <div class="hero-section">
+                        <h1 class="brand-title">CodeAdventurer</h1>
+                        <div class="brand-subtitle" id="brandSubtitle"></div>
+                        <p class="brand-desc">CODE · ADVENTURER · 代码冒险者</p>
+                    </div>
+                    <!-- 特性卡片 -->
+                    <div class="features">
+                        <div class="feature-item">
+                            <div class="feature-icon">🎮</div>
+                            <div class="feature-name">闯关式学习</div>
+                            <div class="feature-desc">游戏化关卡，循序渐进</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🌐</div>
+                            <div class="feature-name">9 种语言</div>
+                            <div class="feature-desc">从 HTML 到 C# 全覆盖</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">⚡</div>
+                            <div class="feature-name">实时预览</div>
+                            <div class="feature-desc">写代码即看效果</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 第二屏：语言选择 -->
+                <section class="screen screen-picker" id="screenPicker">
+                    <!-- 动态主题背景层 -->
+                    <div class="picker-bg" id="pickerBg">
+                        <!-- 默认背景（无主题或加载中） -->
+                        <div class="bg-layer bg-default"></div>
+                        
+                        <!-- 1. 建造师（HTML）背景 -->
+                        <div class="bg-layer bg-builder" data-gameplay="建造师">
+                            <svg class="bg-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+                                <!-- 建筑网格 -->
+                                <defs>
+                                    <pattern id="builderGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(227, 79, 38, 0.3)" stroke-width="1"/>
+                                    </pattern>
+                                </defs>
+                                <rect width="100%" height="100%" fill="url(#builderGrid)" class="grid-bg"/>
+                                <!-- 漂浮的建筑元素 -->
+                                <g class="floating-blocks">
+                                    <rect x="150" y="100" width="60" height="60" fill="none" stroke="rgba(227, 79, 38, 0.5)" stroke-width="2" class="block block-1"/>
+                                    <rect x="550" y="300" width="80" height="40" fill="none" stroke="rgba(240, 101, 41, 0.4)" stroke-width="2" class="block block-2" transform="rotate(15 590 320)"/>
+                                    <polygon points="400,500 450,440 500,500" fill="none" stroke="rgba(227, 79, 38, 0.4)" stroke-width="2" class="block block-3"/>
+                                    <line x1="200" y1="400" x2="250" y2="350" stroke="rgba(240, 101, 41, 0.4)" stroke-width="3" class="wrench wrench-1" stroke-linecap="round"/>
+                                    <circle cx="650" cy="150" r="30" fill="none" stroke="rgba(227, 79, 38, 0.3)" stroke-width="2" class="gear gear-1"/>
+                                    <circle cx="650" cy="150" r="15" fill="none" stroke="rgba(240, 101, 41, 0.4)" stroke-width="2" class="gear gear-2"/>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- 2. 变形记（CSS）背景 -->
+                        <div class="bg-layer bg-shapeshifter" data-gameplay="变形记">
+                            <svg class="bg-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+                                <defs>
+                                    <linearGradient id="cssGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#2965f1;stop-opacity:0.3"/>
+                                        <stop offset="100%" style="stop-color:#264de4;stop-opacity:0.3"/>
+                                    </linearGradient>
+                                </defs>
+                                <rect width="100%" height="100%" fill="url(#cssGradient)"/>
+                                <g class="morphing-shapes">
+                                    <circle cx="200" cy="200" r="80" fill="none" stroke="rgba(41, 101, 241, 0.6)" stroke-width="3" class="shape shape-1"/>
+                                    <rect x="450" y="150" width="120" height="120" fill="none" stroke="rgba(38, 77, 228, 0.5)" stroke-width="3" class="shape shape-2" rx="20"/>
+                                    <polygon points="600,400 700,350 750,450 650,500" fill="none" stroke="rgba(41, 101, 241, 0.4)" stroke-width="3" class="shape shape-3"/>
+                                    <ellipse cx="300" cy="450" rx="100" ry="60" fill="none" stroke="rgba(38, 77, 228, 0.4)" stroke-width="3" class="shape shape-4"/>
+                                    <path d="M 100 500 Q 200 400 300 500 T 500 500" fill="none" stroke="rgba(41, 101, 241, 0.5)" stroke-width="3" class="shape shape-5"/>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- 3. 魔法学院（JavaScript）背景 -->
+                        <div class="bg-layer bg-magic" data-gameplay="魔法学院">
+                            <svg class="bg-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+                                <defs>
+                                    <radialGradient id="magicGlow" cx="50%" cy="50%" r="50%">
+                                        <stop offset="0%" style="stop-color:#f7df1e;stop-opacity:0.2"/>
+                                        <stop offset="100%" style="stop-color:#f0db4f;stop-opacity:0"/>
+                                    </radialGradient>
+                                </defs>
+                                <rect width="100%" height="100%" fill="url(#magicGlow)"/>
+                                <g class="magic-particles">
+                                    <circle cx="200" cy="150" r="4" fill="rgba(247, 223, 30, 0.8)" class="particle p1"/>
+                                    <circle cx="600" cy="250" r="6" fill="rgba(240, 219, 79, 0.7)" class="particle p2"/>
+                                    <circle cx="400" cy="400" r="3" fill="rgba(247, 223, 30, 0.9)" class="particle p3"/>
+                                    <circle cx="150" cy="450" r="5" fill="rgba(240, 219, 79, 0.6)" class="particle p4"/>
+                                    <circle cx="650" cy="100" r="3" fill="rgba(247, 223, 30, 0.8)" class="particle p5"/>
+                                    <circle cx="700" cy="500" r="4" fill="rgba(240, 219, 79, 0.7)" class="particle p6"/>
+                                    <circle cx="100" cy="300" r="3" fill="rgba(247, 223, 30, 0.9)" class="particle p7"/>
+                                </g>
+                                <g class="magic-symbols">
+                                    <polygon points="400,200 410,220 430,220 415,235 420,260 400,245 380,260 385,235 370,220 390,220" fill="none" stroke="rgba(247, 223, 30, 0.4)" stroke-width="2" class="star-star"/>
+                                    <circle cx="200" cy="400" r="25" fill="none" stroke="rgba(240, 219, 79, 0.4)" stroke-width="2" class="magic-circle"/>
+                                    <circle cx="600" cy="450" r="40" fill="none" stroke="rgba(247, 223, 30, 0.3)" stroke-width="1" class="magic-circle-2"/>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- 4. 策略棋盘（Vue）背景 -->
+                        <div class="bg-layer bg-chess" data-gameplay="策略棋盘">
+                            <svg class="bg-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+                                <defs>
+                                    <pattern id="chessBoard" width="60" height="60" patternUnits="userSpaceOnUse">
+                                        <rect width="30" height="30" fill="rgba(66, 184, 131, 0.1)"/>
+                                        <rect x="30" y="30" width="30" height="30" fill="rgba(53, 73, 94, 0.1)"/>
+                                    </pattern>
+                                </defs>
+                                <rect width="100%" height="100%" fill="url(#chessBoard)"/>
+                                <g class="chess-pieces">
+                                    <g transform="translate(200, 150)" class="piece piece-1">
+                                        <circle r="20" fill="rgba(66, 184, 131, 0.6)"/>
+                                        <circle r="20" fill="none" stroke="rgba(66, 184, 131, 0.8)" stroke-width="2"/>
+                                    </g>
+                                    <g transform="translate(500, 300)" class="piece piece-2">
+                                        <rect x="-25" y="-25" width="50" height="50" fill="rgba(53, 73, 94, 0.5)" rx="4"/>
+                                    </g>
+                                    <g transform="translate(650, 450)" class="piece piece-3">
+                                        <polygon points="0,-30 25,15 -25,15" fill="rgba(66, 184, 131, 0.4)"/>
+                                    </g>
+                                    <g transform="translate(150, 400)" class="piece piece-4">
+                                        <rect x="-20" y="-20" width="40" height="40" fill="rgba(53, 73, 94, 0.4)" transform="rotate(45)"/>
+                                    </g>
+                                    <g transform="translate(400, 500)" class="piece piece-5">
+                                        <circle r="15" fill="rgba(66, 184, 131, 0.3)"/>
+                                    </g>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- 5. 忍者训练（Python）背景 -->
+                        <div class="bg-layer bg-ninja" data-gameplay="忍者训练">
+                            <svg class="bg-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+                                <defs>
+                                    <pattern id="ninjaGrid" width="50" height="50" patternUnits="userSpaceOnUse">
+                                        <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(55, 118, 171, 0.3)" stroke-width="1"/>
+                                        <circle cx="25" cy="25" r="2" fill="rgba(55, 118, 171, 0.5)"/>
+                                    </pattern>
+                                </defs>
+                                <rect width="100%" height="100%" fill="url(#ninjaGrid)"/>
+                                <g class="ninja-elements">
+                                    <!-- 忍者镖 -->
+                                    <g transform="translate(200, 200)" class="shuriken sh-1">
+                                        <circle r="25" fill="none" stroke="rgba(55, 118, 171, 0.5)" stroke-width="2"/>
+                                        <line x1="-20" y1="0" x2="20" y2="0" stroke="rgba(55, 118, 171, 0.6)" stroke-width="2"/>
+                                        <line x1="0" y1="-20" x2="0" y2="20" stroke="rgba(55, 118, 171, 0.6)" stroke-width="2"/>
+                                        <line x1="-14" y1="-14" x2="14" y2="14" stroke="rgba(55, 118, 171, 0.6)" stroke-width="2"/>
+                                        <line x1="-14" y1="14" x2="14" y2="-14" stroke="rgba(55, 118, 171, 0.6)" stroke-width="2"/>
+                                    </g>
+                                    <!-- 脚印 -->
+                                    <g fill="rgba(55, 118, 171, 0.4)" class="footprints">
+                                        <ellipse cx="450" cy="150" rx="10" ry="15" class="fp fp-1"/>
+                                        <ellipse cx="480" cy="180" rx="10" ry="15" class="fp fp-2"/>
+                                        <ellipse cx="510" cy="210" rx="10" ry="15" class="fp fp-3"/>
+                                        <ellipse cx="540" cy="240" rx="10" ry="15" class="fp fp-4"/>
+                                    </g>
+                                    <!-- 卷轴 -->
+                                    <g transform="translate(600, 400)" class="scroll scroll-1">
+                                        <rect x="-40" y="-20" width="80" height="40" fill="none" stroke="rgba(55, 118, 171, 0.5)" stroke-width="2" rx="4"/>
+                                        <line x1="-30" y1="-10" x2="30" y2="-10" stroke="rgba(55, 118, 171, 0.4)" stroke-width="1"/>
+                                        <line x1="-30" y1="0" x2="20" y2="0" stroke="rgba(55, 118, 171, 0.4)" stroke-width="1"/>
+                                        <line x1="-30" y1="10" x2="25" y2="10" stroke="rgba(55, 118, 171, 0.4)" stroke-width="1"/>
+                                    </g>
+                                </g>
+                            </svg>
+                        </div>
+                        
+                        <!-- 6. 模拟机器人（Java）背景 -->
+                        <div class="bg-layer bg-robot" data-gameplay="模拟机器人">
+                            <svg class="bg-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+                                <defs>
+                                    <pattern id="robotCircuit" width="30" height="30" patternUnits="userSpaceOnUse">
+                                        <circle cx="15" cy="15" r="1" fill="rgba(234, 45, 46, 0.5)"/>
+                                        <path d="M 15 0 L 15 10 M 15 20 L 15 30 M 0 15 L 10 15 M 20 15 L 30 15" fill="none" stroke="rgba(234, 45, 46, 0.3)" stroke-width="1"/>
+                                    </pattern>
+                                </defs>
+                                <rect width="100%" height="100%" fill="url(#robotCircuit)"/>
+                                <g class="robot-parts">
+                                    <!-- 机器人头部 -->
+                                    <g transform="translate(300, 200)" class="robot-head">
+                                        <rect x="-30" y="-20" width="60" height="40" fill="none" stroke="rgba(234, 45, 46, 0.6)" stroke-width="2" rx="5"/>
+                                        <circle cx="-12" cy="0" r="5" fill="rgba(234, 45, 46, 0.7)"/>
+                                        <circle cx="12" cy="0" r="5" fill="rgba(234, 45, 46, 0.7)"/>
+                                        <line x1="-15" y1="12" x2="15" y2="12" stroke="rgba(234, 45, 46, 0.5)" stroke-width="2" stroke-linecap="round"/>
+                                        <line x1="0" y1="-25" x2="0" y2="-35" stroke="rgba(234, 45, 46, 0.4)" stroke-width="2"/>
+                                        <circle cx="0" cy="-38" r="4" fill="rgba(234, 45, 46, 0.6)"/>
+                                    </g>
+                                    <!-- 齿轮 -->
+                                    <g transform="translate(550, 400)" class="gear-big">
+                                        <circle r="40" fill="none" stroke="rgba(234, 45, 46, 0.5)" stroke-width="3"/>
+                                        <circle r="20" fill="none" stroke="rgba(234, 45, 46, 0.6)" stroke-width="2"/>
+                                        <g stroke="rgba(234, 45, 46, 0.5)" stroke-width="3">
+                                            <line x1="0" y1="-40" x2="0" y2="-30"/>
+                                            <line x1="0" y1="30" x2="0" y2="40"/>
+                                            <line x1="-40" y1="0" x2="-30" y2="0"/>
+                                            <line x1="30" y1="0" x2="40" y2="0"/>
+                                        </g>
+                                    </g>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- 7. 底层赛车（C/C++）背景 -->
+                        <div class="bg-layer bg-racing" data-gameplay="底层赛车">
+                            <svg class="bg-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+                                <defs>
+                                    <linearGradient id="racingSpeed" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#00599c;stop-opacity:0"/>
+                                        <stop offset="50%" style="stop-color:#00599c;stop-opacity:0.3"/>
+                                        <stop offset="100%" style="stop-color:#00599c;stop-opacity:0"/>
+                                    </linearGradient>
+                                </defs>
+                                <g class="speed-lines">
+                                    <line x1="0" y1="150" x2="800" y2="150" stroke="url(#racingSpeed)" stroke-width="20" class="speed-line sl-1"/>
+                                    <line x1="0" y1="300" x2="800" y2="300" stroke="url(#racingSpeed)" stroke-width="30" class="speed-line sl-2"/>
+                                    <line x1="0" y1="450" x2="800" y2="450" stroke="url(#racingSpeed)" stroke-width="15" class="speed-line sl-3"/>
+                                </g>
+                                <g class="racing-elements">
+                                    <!-- 赛道线 -->
+                                    <g stroke="rgba(0, 89, 156, 0.4)" stroke-width="3" class="track-lines" stroke-dasharray="20,10">
+                                        <line x1="100" y1="100" x2="700" y2="100" class="track t-1"/>
+                                        <line x1="100" y1="250" x2="700" y2="250" class="track t-2"/>
+                                        <line x1="100" y1="400" x2="700" y2="400" class="track t-3"/>
+                                        <line x1="100" y1="550" x2="700" y2="550" class="track t-4"/>
+                                    </g>
+                                    <!-- 赛车轮廓 -->
+                                    <g transform="translate(400, 300)" class="car car-1">
+                                        <path d="M-60,10 L-40,-20 L40,-20 L60,10 L60,25 L-60,25 Z" fill="none" stroke="rgba(0, 89, 156, 0.6)" stroke-width="3"/>
+                                        <circle cx="-35" cy="25" r="12" fill="none" stroke="rgba(0, 89, 156, 0.7)" stroke-width="2"/>
+                                        <circle cx="35" cy="25" r="12" fill="none" stroke="rgba(0, 89, 156, 0.7)" stroke-width="2"/>
+                                    </g>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- 8. 射击游戏（C#）背景 -->
+                        <div class="bg-layer bg-shooter" data-gameplay="射击游戏">
+                            <svg class="bg-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+                                <defs>
+                                    <radialGradient id="shooterHud" cx="50%" cy="50%" r="50%">
+                                        <stop offset="0%" style="stop-color:#9b4f96;stop-opacity:0.1"/>
+                                        <stop offset="100%" style="stop-color:#68217a;stop-opacity:0"/>
+                                    </radialGradient>
+                                </defs>
+                                <rect width="100%" height="100%" fill="url(#shooterHud)"/>
+                                <g class="shooter-targets">
+                                    <!-- 瞄准圈 -->
+                                    <g transform="translate(400, 300)" class="crosshair">
+                                        <circle r="50" fill="none" stroke="rgba(155, 79, 150, 0.5)" stroke-width="2"/>
+                                        <circle r="30" fill="none" stroke="rgba(155, 79, 150, 0.4)" stroke-width="2"/>
+                                        <circle r="10" fill="none" stroke="rgba(155, 79, 150, 0.6)" stroke-width="2"/>
+                                        <line x1="-60" y1="0" x2="-40" y2="0" stroke="rgba(155, 79, 150, 0.7)" stroke-width="2"/>
+                                        <line x1="40" y1="0" x2="60" y2="0" stroke="rgba(155, 79, 150, 0.7)" stroke-width="2"/>
+                                        <line x1="0" y1="-60" x2="0" y2="-40" stroke="rgba(155, 79, 150, 0.7)" stroke-width="2"/>
+                                        <line x1="0" y1="40" x2="0" y2="60" stroke="rgba(155, 79, 150, 0.7)" stroke-width="2"/>
+                                    </g>
+                                    <!-- 飞行的子弹 -->
+                                    <g class="bullets">
+                                        <circle cx="150" cy="150" r="4" fill="rgba(155, 79, 150, 0.8)" class="bullet b-1"/>
+                                        <circle cx="650" cy="450" r="5" fill="rgba(155, 79, 150, 0.7)" class="bullet b-2"/>
+                                        <circle cx="600" cy="100" r="3" fill="rgba(155, 79, 150, 0.9)" class="bullet b-3"/>
+                                        <circle cx="200" cy="500" r="4" fill="rgba(155, 79, 150, 0.6)" class="bullet b-4"/>
+                                    </g>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- 9. 生活模拟（Uni-app）背景 -->
+                        <div class="bg-layer bg-simulator" data-gameplay="生活模拟">
+                            <svg class="bg-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+                                <defs>
+                                    <linearGradient id="simSky" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:rgba(0, 220, 130, 0.2)"/>
+                                        <stop offset="100%" style="stop-color:rgba(54, 53, 147, 0.2)"/>
+                                    </linearGradient>
+                                </defs>
+                                <rect width="100%" height="100%" fill="url(#simSky)"/>
+                                <g class="sim-world">
+                                    <!-- 手机屏幕 -->
+                                    <g transform="translate(400, 300)" class="phone-frame">
+                                        <rect x="-80" y="-120" width="160" height="240" fill="none" stroke="rgba(0, 220, 130, 0.6)" stroke-width="3" rx="15"/>
+                                        <rect x="-70" y="-110" width="140" height="220" fill="rgba(54, 53, 147, 0.1)"/>
+                                        <!-- 手机上的小部件 -->
+                                        <circle cx="-30" cy="-80" r="15" fill="none" stroke="rgba(0, 220, 130, 0.5)" stroke-width="2"/>
+                                        <rect x="10" y="-90" width="40" height="10" fill="none" stroke="rgba(0, 220, 130, 0.4)" stroke-width="2" rx="2"/>
+                                        <rect x="-50" y="-50" width="100" height="60" fill="none" stroke="rgba(0, 220, 130, 0.4)" stroke-width="2" rx="5"/>
+                                        <circle cx="-20" cy="80" r="10" fill="rgba(0, 220, 130, 0.4)"/>
+                                        <circle cx="15" cy="80" r="10" fill="rgba(54, 53, 147, 0.5)"/>
+                                    </g>
+                                    <!-- 小星球 -->
+                                    <circle cx="150" cy="150" r="20" fill="none" stroke="rgba(0, 220, 130, 0.4)" stroke-width="2" class="planet p-1"/>
+                                    <circle cx="650" cy="450" r="15" fill="none" stroke="rgba(54, 53, 147, 0.4)" stroke-width="2" class="planet p-2"/>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="section-title-wrap">
+                        <div class="return-hint" id="returnHint">↑ 再次上滑返回首页</div>
+                        <div class="section-title">选择一门语言开始学习</div>
+                    </div>
+                    <div class="lang-picker" id="langPicker">
+                        <div class="picker-viewport" id="pickerViewport">
+                            <div class="picker-track" id="pickerTrack"></div>
+                        </div>
+                    </div>
+                    <div class="footer-deco">
+                        <span class="dot"></span>
+                        <span>READY TO CODE</span>
+                        <span class="dot"></span>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+    <!-- 关卡页：剧情任务闯关 -->
+    <div class="level-page page" id="levelPage">
+      <!-- 顶部 HUD -->
+      <header class="level-hud">
+        <button class="level-back-btn" id="levelBackBtn" type="button">← 撤退</button>
+        <div class="hud-center">
+          <div class="level-icon" id="levelIcon"></div>
+          <div class="hud-text">
+            <div class="level-subtitle" id="levelSubtitle"></div>
+            <div class="level-title" id="levelTitle"></div>
+          </div>
+        </div>
+        <div class="level-progress" id="levelProgress"></div>
+      </header>
+
+      <!-- 目标横幅（细条，非面板） -->
+      <div class="level-objective-bar">
+        <span class="obj-label">目标</span>
+        <span class="obj-text" id="missionObjective"></span>
+      </div>
+
+      <!-- 沉浸场景：占满剩余空间，叙事/目标/反馈都在场景内 -->
+      <main class="level-scene">
+        <iframe class="preview-frame" id="previewFrame" title="场景"></iframe>
+      </main>
+
+      <!-- 底部输入区：融入场景 -->
+      <footer class="level-cast">
+        <textarea class="code-editor" id="codeEditor" spellcheck="false" autocomplete="off" placeholder="在这里输入代码… 输入即生效，Ctrl / Cmd + Enter 完成挑战"></textarea>
+        <div class="cast-actions">
+          <button class="level-btn level-btn-hint" id="btnHint" type="button">💡 提示</button>
+          <button class="level-btn level-btn-check" id="btnCheck" type="button">✓ 完成挑战</button>
+        </div>
+      </footer>
+
+      <!-- 情报弹窗 -->
+      <div class="hint-modal" id="hintModal" hidden>
+        <div class="hint-modal-mask"></div>
+        <div class="hint-modal-card">
+          <h3 class="hint-modal-title">战术提示</h3>
+          <p class="hint-text" id="hintText"></p>
+          <button class="hint-close" id="hintClose" type="button">收到</button>
+        </div>
+      </div>
+
+      <!-- 过关结算弹窗 -->
+      <div class="pass-modal" id="passModal" hidden>
+        <div class="pass-modal-mask"></div>
+        <div class="pass-modal-card">
+          <div class="pass-banner">
+            <div class="pass-title">关卡通关</div>
+            <div class="pass-subtitle">任务完成，奖励已发放</div>
+          </div>
+          <div class="star-rating" id="starRating">
+            <span class="star" data-star="0">★</span>
+            <span class="star" data-star="1">★</span>
+            <span class="star" data-star="2">★</span>
+          </div>
+          <div class="pass-rewards">
+            <div class="reward-item">
+              <span class="reward-icon">⭐</span>
+              <span class="reward-label">经验值</span>
+              <span class="reward-value" id="rewardExp">+100</span>
+            </div>
+            <div class="reward-item">
+              <span class="reward-icon">🪙</span>
+              <span class="reward-label">金币</span>
+              <span class="reward-value" id="rewardCoin">+50</span>
+            </div>
+          </div>
+          <div class="pass-actions">
+            <button class="pass-btn pass-btn-next" id="passNextBtn" type="button">继续冒险</button>
+            <button class="pass-btn pass-btn-back" id="passBackBtn" type="button">返回地图</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 通关 / 报错 Toast -->
+      <div class="level-toast" id="levelToast" hidden></div>
+    </div>
+
+    <!-- 脚本加载 -->
+    <script src="js/background.js?v=49"></script>
+    <script src="js/languages.js?v=49"></script>
+    <script src="js/levels.js?v=53"></script>
+    <script src="js/app.js?v=50"></script>
+</body>
+</html>
